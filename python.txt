@@ -1,0 +1,73 @@
+import speech_recognition as sr
+import pyttsx3
+import pywhatkit
+import datetime
+import wikipedia
+
+listener = sr.Recognizer()
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+
+
+def talk(text):
+    try:
+        engine.say(text)
+        engine.runAndWait()
+    except:
+        print("Error: Could not speak text")
+
+
+def take_command():
+    try:
+        with sr.Microphone() as source:
+            print('listening...')
+            voice = listener.listen(source)
+            command = listener.recognize_google(voice)
+            command = command.lower()
+            if 'alexa' in command:
+                command = command.replace('alexa', '')
+                print(command)
+    except:
+        print("Error: Could not recognize speech")
+        command = ""
+    return command
+
+
+def run_alexa():
+    try:
+        command = take_command()
+        print(command)
+        if 'play' in command:
+            song = command.replace('play', '')
+            talk(f"playing {song}")
+            pywhatkit.playonyt(song)
+        elif 'time' in command:
+            time = datetime.datetime.now().strftime('%H:%M')
+            print(time)
+            talk(f"Current time is {time}")
+        elif 'who is' in command:
+            person = command.replace('who is', '')
+            try:
+                info = wikipedia.summary(person, 1)
+                print(info)
+                talk(info)
+            except wikipedia.exceptions.DisambiguationError as e:
+                options = e.options[:3] # get the top 3 search options
+                talk(f"Which {person} do you mean? Here are some options: {options}")
+        return True
+    except sr.UnknownValueError:
+        print("Error: Could not recognize speech")
+        return False
+    except sr.RequestError:
+        print("Error: Could not connect to speech recognition service")
+        return False
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return False
+
+
+
+if __name__ == "__main__":
+    run_alexa()
+
